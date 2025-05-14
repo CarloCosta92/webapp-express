@@ -56,7 +56,37 @@ function show(req, res) {
     });
 }
 
+// creazione recensione 
+
+function createReview(req, res) {
+    const { name, text, vote } = req.body;
+    const { id } = req.params;
+
+
+    if (!name || !text || !vote || !id) {
+        return res.status(400).json({ error });
+    }
+
+    const sql = 'INSERT INTO reviews (name, text, vote, movie_id) VALUES (?, ?, ?, ?)';
+
+    connection.query(sql, [name, text, parseInt(vote), id], (err, result) => {
+        if (err) {
+            console.error("Errore nell'inserimento della recensione:", err);
+            return res.status(500).json({ error: 'Impossibile aggiungere la recensione al db' });
+        }
+
+        const selectSql = 'SELECT * FROM reviews WHERE id = ?';
+        connection.query(selectSql, [result.insertId], (selectErr, newReviewResults) => {
+            if (selectErr) {
+                return res.status(201).json({ message: 'Recensione aggiunta ', reviewId: result.insertId });
+            }
+
+            res.status(201).json({ message: 'Recensione aggiunta ', review: newReviewResults[0] });
+        });
+    });
+}
 module.exports = {
     index,
-    show
+    show,
+    createReview
 };
